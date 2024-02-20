@@ -33,10 +33,10 @@
         android:id="@+id/controller"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         android:background="@color/color_play"
-        android:padding="10dp">
+        android:padding="10dp"
+        android:visibility="gone">
         <ImageView
             android:id="@+id/imv_play_song"
             android:layout_width="50dp"
@@ -80,15 +80,15 @@
             android:padding="5dp"
             android:drawableStart="@drawable/baseline_skip_previous_24"/>
 
-        <TextView
+        <ImageView
             android:id="@+id/btn_play_pause"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             app:layout_constraintEnd_toStartOf="@id/btn_next"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             android:padding="5dp"
-            android:drawableStart="@drawable/baseline_play_arrow_24" />
+            android:src="@drawable/baseline_pause_24" />
 
         <TextView
             android:id="@+id/btn_next"
@@ -101,5 +101,6 @@
             android:drawableStart="@drawable/baseline_skip_next_24"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+    <include layout="@layout/player_view"></include>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

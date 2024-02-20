@@ -12,6 +12,7 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Binder
 import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import android.provider.MediaStore
 import android.util.Log
@@ -27,6 +28,8 @@ import java.util.Random
 
 class MusicService : Service() {
     val MUSIC_CHANNEL_ID = "music_channel_id"
+    val currentSongTitle = MutableLiveData<String>()
+
 
     interface OnSeekChangedListener {
         fun onSeekChanged(pos: Int)
@@ -83,6 +86,7 @@ class MusicService : Service() {
             "ACTION_REPEAT_ALL" -> /*repeat all*/ reapetAll()
             "ACTION_REPEAT_ONE" -> /*repeat one*/ reapetOne()
             "ACTION_OFF_ALL_REPEAT_MODE" -> /*off all repeat mode*/ offAllRepeatMode()
+            "ACTION_UPDATE_PLAYING" -> updatePlaying(intent)
             else -> throw IllegalStateException("Unknown action")
         }
         return super.onStartCommand(intent, flags, startId)
@@ -171,20 +175,22 @@ class MusicService : Service() {
         }
         currentSongIndex = index
         playSongAtCurrentIndex()
+
     }
 
     private fun pauseSong() {
         mediaPlayer.pause()
     }
 
-    private fun playSongAtCurrentIndex() {
+    fun playSongAtCurrentIndex() {
         mediaPlayer.reset()
         if(currentSongIndex == -1) return
-        val songId = listSong.value!![currentSongIndex].id
-        if(songId != -1) {
+        val song = listSong.value!![currentSongIndex]
+        currentSongTitle.postValue(song.title)
+        if(song.id != -1) {
             val trackUri =
                 ContentUris.withAppendedId(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId.toLong()
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.id.toLong()
                 )
             try {
                 mediaPlayer.setDataSource(this, trackUri)
@@ -206,12 +212,6 @@ class MusicService : Service() {
             }!!
             playSongAtCurrentIndex()
         }
-    }
-    private fun updatePlaying() {
-
-        val title = listSong.value!![currentSongIndex].title
-        val author = listSong.value!![currentSongIndex].author
-        val image = listSong.value!![currentSongIndex].image
     }
 
     fun createNotificationChannel() {
@@ -316,11 +316,11 @@ class MusicService : Service() {
                     val title = c.getString(titleIndex)
                     val author = c.getString(authorIndex)
                     val album = c.getString(albumIndex)
-                    val album_id = c.getLong(albumIndex)
+                    val albumId = c.getLong(albumIndex)
                     val duration = c.getLong(durationIndex)
 
                     val image: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"),
-                        album_id
+                        albumId
                     )
 
                     val song = Song(id, title, author, album, duration, image)
