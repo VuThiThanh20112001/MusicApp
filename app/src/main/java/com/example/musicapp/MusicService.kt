@@ -29,7 +29,9 @@ import java.util.Random
 class MusicService : Service() {
     val MUSIC_CHANNEL_ID = "music_channel_id"
     val currentSongTitle = MutableLiveData<String>()
-
+    val currentSongArtist = MutableLiveData<String>()
+    val currentSongImage = MutableLiveData<Uri>()
+    val currentSongDuration = MutableLiveData<Long>()
 
     interface OnSeekChangedListener {
         fun onSeekChanged(pos: Int)
@@ -86,7 +88,6 @@ class MusicService : Service() {
             "ACTION_REPEAT_ALL" -> /*repeat all*/ reapetAll()
             "ACTION_REPEAT_ONE" -> /*repeat one*/ reapetOne()
             "ACTION_OFF_ALL_REPEAT_MODE" -> /*off all repeat mode*/ offAllRepeatMode()
-            "ACTION_UPDATE_PLAYING" -> updatePlaying(intent)
             else -> throw IllegalStateException("Unknown action")
         }
         return super.onStartCommand(intent, flags, startId)
@@ -187,6 +188,9 @@ class MusicService : Service() {
         if(currentSongIndex == -1) return
         val song = listSong.value!![currentSongIndex]
         currentSongTitle.postValue(song.title)
+        currentSongArtist.postValue(song.author)
+        currentSongImage.postValue(song.image)
+        currentSongDuration.postValue(song.duration)
         if(song.id != -1) {
             val trackUri =
                 ContentUris.withAppendedId(
@@ -213,6 +217,7 @@ class MusicService : Service() {
             playSongAtCurrentIndex()
         }
     }
+
 
     fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
