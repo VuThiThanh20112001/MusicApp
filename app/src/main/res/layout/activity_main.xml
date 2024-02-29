@@ -15,10 +15,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar">
-        <androidx.appcompat.widget.Toolbar
+        <SearchView
+            android:id="@+id/btn_Search"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:menu="@menu/search_btn"/>
+            android:layout_height="wrap_content"
+            android:queryHint="Search"
+            android:iconifiedByDefault="false"
+            android:background="@drawable/bg_search"
+            android:gravity="center_vertical"
+            android:layout_margin="10dp"/>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -34,7 +39,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:background="@color/color_play"
+        android:background="@drawable/bg_search"
         android:padding="10dp"
         android:visibility="gone">
         <ImageView
@@ -56,9 +61,10 @@
             android:paddingLeft="20dp">
             <TextView
                 android:id="@+id/txt_play_name"
-                android:layout_width="wrap_content"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:textColor="@color/white"
+                android:maxLines="1"
                 android:text="@string/app_name"
                 android:textSize="16sp"/>
             <TextView
@@ -66,7 +72,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/app_name"
-                android:textSize="12sp"
+                android:textSize="10sp"
                 android:textColor="@color/color_author" />
         </LinearLayout>
 
@@ -82,8 +88,8 @@
 
         <ImageView
             android:id="@+id/btn_play_pause"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             app:layout_constraintEnd_toStartOf="@id/btn_next"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"

@@ -2,7 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="color_author">#C3C8C9</color>
-    <color name="color_play">#403B3B</color>
+    <color name="color_author">#c0c0c0</color>
+    <color name="color_play">#808080</color>
     <color name="color_click">#22D05D</color>
+    <color name="color_search">#272B30</color>
+    <color name="color_searchText">#A6A6A6</color>
 </resources>

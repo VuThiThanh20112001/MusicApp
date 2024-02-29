@@ -1,6 +1,7 @@
 package com.example.musicapp
 
 import android.content.Intent
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +15,7 @@ import com.bumptech.glide.Glide
 class SongListAdapter(var listener: View.OnClickListener? = null) : RecyclerView.Adapter<SongListAdapter.SongViewHodel>() {
 
     var listSong: List<Song> = emptyList()
+
     inner class SongViewHodel(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val txtTitle = itemView.findViewById<TextView>(R.id.song_title)
         val txtAuthor = itemView.findViewById<TextView>(R.id.song_author)
@@ -41,8 +43,5 @@ class SongListAdapter(var listener: View.OnClickListener? = null) : RecyclerView
 
         holder.itemView.tag = listSong[position]
         holder.itemView.setOnClickListener(listener)
-
-
     }
-
 }

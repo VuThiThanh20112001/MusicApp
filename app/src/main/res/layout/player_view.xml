@@ -6,44 +6,46 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/black"
     android:orientation="vertical"
-    android:paddingHorizontal="20dp"
+    android:paddingHorizontal="10dp"
     android:focusable="true"
     android:clickable="true"
     android:visibility="gone">
+
     <ImageView
         android:id="@+id/btn_down"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/baseline_keyboard_arrow_down_24"
-        android:paddingVertical="10dp"/>
+        android:src="@drawable/baseline_keyboard_arrow_down_24" />
 
-        <ImageView
-            android:id="@+id/imv_image_song"
-            android:layout_width="300dp"
-            android:layout_height="300dp"
-            android:layout_marginTop="30dp"
-            android:src="@drawable/ic_launcher_foreground"
-            android:layout_gravity="center_horizontal"
-            />
+    <ImageView
+        android:id="@+id/imv_image_song"
+        android:layout_width="350dp"
+        android:layout_height="350dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="30dp"
+        android:src="@drawable/ic_launcher_foreground" />
     <TextView
         android:id="@+id/txt_songname"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/app_name"
         android:textColor="@color/white"
         android:textSize="20sp"
         android:textStyle="bold"
+        android:maxLines="1"
+        android:layout_gravity="center_horizontal"
         android:gravity="center_horizontal"
-        android:paddingTop="50dp"
+        android:paddingTop="40dp"
         />
     <TextView
         android:id="@+id/txt_author"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/app_name"
         android:textColor="@color/color_author"
         android:textSize="16sp"
         android:gravity="center_horizontal"
+        android:layout_gravity="center_horizontal"
         android:textStyle="normal"/>
     <RelativeLayout
         android:id="@+id/relativelayout"
@@ -61,17 +63,19 @@
             android:id="@+id/txt_skipNext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0.0"
+            android:text="00.00"
             android:layout_below="@id/seekbar"
-            android:textColor="@color/color_author"/>
+            android:textColor="@color/color_author"
+            android:paddingLeft="12dp"/>
         <TextView
             android:id="@+id/txt_skipEnd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0.0"
+            android:text="00.00"
             android:layout_alignEnd="@id/seekbar"
             android:layout_below="@id/seekbar"
-            android:textColor="@color/color_author" />
+            android:textColor="@color/color_author"
+            android:paddingRight="15dp"/>
     </RelativeLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout

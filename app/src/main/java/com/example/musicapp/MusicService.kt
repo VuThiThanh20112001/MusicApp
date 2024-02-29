@@ -8,6 +8,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.ContentUris
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Binder
@@ -19,11 +21,13 @@ import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.MutableLiveData
+import androidx.media3.session.MediaStyleNotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Random
+
 
 
 class MusicService : Service() {
@@ -202,6 +206,15 @@ class MusicService : Service() {
                 Log.e("MUSIC SERVICE", "Error starting data source", e)
             }
             mediaPlayer.prepareAsync()
+            mediaPlayer.setOnCompletionListener {
+                if(repeatMode == RepeatMode.OFF) {
+                    currentSongIndex = -1
+                } else if(repeatMode == RepeatMode.ONE) {
+                    playSongAtCurrentIndex()
+                } else if(repeatMode == RepeatMode.ALL) {
+                    nextSong()
+                }
+            }
         }
     }
 
@@ -227,8 +240,6 @@ class MusicService : Service() {
             val importance = NotificationManager.IMPORTANCE_LOW
             val mChannel = NotificationChannel(MUSIC_CHANNEL_ID, name, importance)
             mChannel.description = descriptionText
-            // Register the channel with the system. You can't change the importance
-            // or other notification behaviors after this.
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(mChannel)
         }
@@ -247,35 +258,43 @@ class MusicService : Service() {
             .getService(this, 102, prevIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val nextIntent = Intent(this, MusicService::class.java)
-        prevIntent.action = "ACTION_NEXT"
-
+        nextIntent.action = "ACTION_NEXT"
         val nextPendingIntent = PendingIntent
-            .getService(this, 102, nextIntent, PendingIntent.FLAG_IMMUTABLE)
+            .getService(this, 103, nextIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val playIntent = Intent(this, MusicService::class.java)
-//        if(musicService != null && musicService!!.mediaPlayer.isPlaying) {
-//            prevIntent.action = "ACTION_PAUSE"
-//        } else {
-//            prevIntent.action = "ACTION_CONTINUE"
-//        }
-//        prevIntent.action = "ACTION_PAUSE"
+        val playAction = if (mediaPlayer.isPlaying) {
+            "ACTION_PAUSE"
+
+        } else {
+            "ACTION_CONTINUE"
+        }
+        playIntent.action = playAction
         val playPendingIntent = PendingIntent
-            .getService(this, 102, playIntent, PendingIntent.FLAG_IMMUTABLE)
+            .getService(this, 104, playIntent, PendingIntent.FLAG_IMMUTABLE)
+        val playIcon = if (playAction != "ACTION_PAUSE") {
+            R.drawable.baseline_play_arrow_24
+
+        } else {
+            R.drawable.baseline_pause_24
+
+        }
+//        val bitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.baseline_music_note_24)
 
         val controller = RemoteViews(packageName, R.layout.controller_notification)
         controller.setOnClickPendingIntent(R.id.btn_prev, prevPendingIntent)
         controller.setOnClickPendingIntent(R.id.btn_next, nextPendingIntent)
         controller.setOnClickPendingIntent(R.id.btn_play_pause, playPendingIntent)
+        controller.setImageViewResource(R.id.btn_play_pause, playIcon)
         controller.setTextViewText(R.id.txt_title, listSong.value!![currentSongIndex].title)
         controller.setTextViewText(R.id.txt_author, listSong.value!![currentSongIndex].author)
 
-        // @TODO: Hoàn thiện giao diện thanh thông báo và action cho nút play/pause/next
-
         val notification = NotificationCompat.Builder(this, MUSIC_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.baseline_music_note_24)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setCustomContentView(controller)
             .setContentIntent(pendingIntent)
+//            .setLargeIcon(bitmap)
             .build()
         return notification
     }
@@ -301,7 +320,6 @@ class MusicService : Service() {
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.ALBUM_ID,
                 MediaStore.Audio.Media.DURATION,
-                MediaStore.Images.Media.DATA,
             )
             val clauses = "${MediaStore.Audio.Media.IS_MUSIC}=?"
             val clausesArgs = arrayOf("1")

@@ -1,7 +1,6 @@
 package com.example.musicapp
 
 import android.Manifest
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -16,10 +15,10 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SearchView
@@ -30,6 +29,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.appbar.AppBarLayout
+import java.util.regex.Pattern
 
 val ATLEAST_TIRAMISU = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
@@ -52,15 +52,15 @@ class MainActivity : AppCompatActivity() {
     var btnPlaySong: ImageView? = null
     var isSuffer = false
     var animation: Animation? = null
+    var animationTitle: Animation? = null
     var seekBar: SeekBar? = null
-    var startPoint = 0
-    var endPoint = 0
     var isRepeatOneEnabled = false
     val handler = Handler(Looper.getMainLooper())
     val utilities = Utilities()
-    companion object {
-        const val REQUEST_CODE_PLAY_SONG = 1001
-    }
+    var appbar : AppBarLayout? = null
+    var btnSearchView : SearchView? = null
+    var isSearchEmpty = true
+
 
     val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -92,6 +92,9 @@ class MainActivity : AppCompatActivity() {
         txtAuthor = findViewById(R.id.txt_play_author)
         imgSong = findViewById(R.id.imv_play_song)
         btnPlayPause = findViewById(R.id.btn_play_pause)
+        appbar = findViewById(R.id.appbar)
+        btnSearchView = findViewById(R.id.btn_Search)
+        btnSearchView?.clearFocus()
 
         txtTitlePlay = findViewById(R.id.txt_songname)
         txtAuthorPlay = findViewById(R.id.txt_author)
@@ -102,9 +105,12 @@ class MainActivity : AppCompatActivity() {
         seekBar = findViewById(R.id.seekbar)
         seekBar?.max = 100
         animation = AnimationUtils.loadAnimation(this@MainActivity, R.anim.rotate)
+        animationTitle = AnimationUtils.loadAnimation(this@MainActivity, R.anim.translate)
+
+
+
         val updateSeekBarRunnable = object : Runnable {
             override fun run() {
-                // Gọi hàm updateSeekBar để cập nhật vị trí của seekbar
                 updateSeekBar()
                 handler.postDelayed(this, 1000)
             }
@@ -113,17 +119,37 @@ class MainActivity : AppCompatActivity() {
 
         adapter = SongListAdapter(listener = {
             val song = it.tag as Song
-
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.putExtra("SONG_ID", song.id)
             intent.action = "ACTION_PLAY"
             startService(intent)
             imgSongPlay?.startAnimation(animation)
-            playControl?.visibility = View.VISIBLE
+            playerView?.visibility = View.VISIBLE
+            appbar?.visibility = View.GONE
 
         })
-
         recyclerView.adapter = adapter
+
+        btnSearchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                if (!query.isNullOrEmpty()) {
+                    filterSongs(query)
+                } else {
+                    restoreOriginalList()
+                }
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                if (!newText.isNullOrEmpty()) {
+                    filterSongs(newText)
+                } else {
+                    restoreOriginalList()
+                }
+                return true
+            }
+        })
+
         val btnNext = findViewById<TextView>(R.id.btn_next)
         btnNext.setOnClickListener {
             val intent = Intent(this@MainActivity, MusicService::class.java)
@@ -158,7 +184,6 @@ class MainActivity : AppCompatActivity() {
                 btnPlaySong?.setImageResource(R.drawable.baseline_play_circle_24)
                 animation?.cancel()
                 imgSongPlay?.clearAnimation()
-//                handler.removeCallbacks(updateSeekBarRunnable)
             } else {
                 intent.action = "ACTION_CONTINUE"
                 btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
@@ -172,7 +197,6 @@ class MainActivity : AppCompatActivity() {
         btnPlaySong?.setOnClickListener {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             if(musicService != null && musicService!!.mediaPlayer.isPlaying) {
-//                handler.removeCallbacks(updateSeekBarRunnable)
                 intent.action = "ACTION_PAUSE"
                 btnPlaySong?.setImageResource(R.drawable.baseline_play_circle_24)
                 btnPlayPause?.setImageResource(R.drawable.baseline_play_arrow_24)
@@ -183,7 +207,6 @@ class MainActivity : AppCompatActivity() {
                 intent.action = "ACTION_CONTINUE"
                 btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
                 btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
-//                animation?.cancel()
                 imgSongPlay?.startAnimation(animation)
                 updateSeekBar()
             }
@@ -194,21 +217,19 @@ class MainActivity : AppCompatActivity() {
         repeatAll.setOnClickListener{
             val intent = Intent(this@MainActivity, MusicService::class.java)
             val clickedColor = ContextCompat.getColor(this@MainActivity, R.color.color_click)
-            if (!isRepeatOneEnabled) { // Nếu nút chưa được nhấn trước đó
+            if (!isRepeatOneEnabled) {
                 if (musicService != null && musicService!!.mediaPlayer.isPlaying) {
                     intent.action = "ACTION_REPEAT_ONE"
                     startService(intent)
                     repeatAll.setTextColor(clickedColor)
-                    isRepeatOneEnabled = true // Đặt trạng thái của nút thành true
+                    isRepeatOneEnabled = true
                 }
             } else { // Nếu nút đã được nhấn trước đó
                 intent.action = "ACTION_OFF_ALL_REPEAT_MODE"
                 startService(intent)
                 repeatAll.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
-                isRepeatOneEnabled = false // Đặt trạng thái của nút thành false
+                isRepeatOneEnabled = false
             }
-
-            // Thay đổi màu của các drawable trong nút
             repeatAll.compoundDrawables.forEach { drawable ->
                 if (drawable != null) {
                     if (isRepeatOneEnabled) {
@@ -226,16 +247,16 @@ class MainActivity : AppCompatActivity() {
             val clickedColor = ContextCompat.getColor(this@MainActivity, R.color.color_click)
             if (!isSuffer) { // Nếu nút chưa được nhấn trước đó
                 if (musicService != null && musicService!!.mediaPlayer.isPlaying) {
-                    intent.action = "ACTION_SUFFER"
+                    intent.action = "ACTION_REPEAT_ALL"
                     startService(intent)
                     btnMix.setTextColor(clickedColor)
-                    isSuffer = true // Đặt trạng thái của nút thành true
+                    isSuffer = true
                 }
             } else { // Nếu nút đã được nhấn trước đó
-                intent.action = "ACTION_OFF_SUFFER"
+                intent.action = "ACTION_OFF_ALL_REPEAT_MODE"
                 startService(intent)
                 btnMix.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
-                isSuffer = false // Đặt trạng thái của nút thành false
+                isSuffer = false
             }
             // Thay đổi màu của các drawable trong nút
             btnMix.compoundDrawables.forEach { drawable ->
@@ -249,18 +270,22 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-//        seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-//            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-//                skipNext?.text = progress.toString()
-//                musicService!!.mediaPlayer.seekTo(progress)
-//
-//            }
-//
-//            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+        seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    // Lấy vị trí mới được chọn bởi người dùng
+                    val newPosition = utilities.progressToTimer(progress, musicService?.mediaPlayer?.duration ?: 0)
+                    // Đặt vị trí mới cho bài hát
+                    musicService?.mediaPlayer?.seekTo(newPosition)
+                }
+
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
 //                startPoint = seekBar!!.progress
-//            }
-//
-//            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
 //                endPoint = seekBar!!.progress
 ////                val newPosition = seekBar?.progress ?: 0
 //
@@ -268,10 +293,16 @@ class MainActivity : AppCompatActivity() {
 //                val intent = Intent(this@MainActivity, MusicService::class.java)
 //                intent.action = "ACTION_SEEK"
 //                intent.putExtra("SEEK_POS", endPoint)
-//                startService(intent)
-//            }
 //
-//        })
+//                startService(intent)
+//                updateSeekBar()
+                // Lấy vị trí mới từ thanh SeekBar
+                val newPosition = utilities.progressToTimer(seekBar!!.progress, musicService?.mediaPlayer?.duration ?: 0)
+                // Đặt vị trí mới cho bài hát
+                musicService?.mediaPlayer?.seekTo(newPosition)
+            }
+
+        })
 
         playerControls()
 
@@ -283,9 +314,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeCurrentSongTitle() {
-        musicService?.currentSongTitle?.observe(this, {title ->
+        musicService?.currentSongTitle?.observe(this, { title ->
             txtTitle?.text = title
             txtTitlePlay?.text = title
+            if (title.length > 20) {
+                txtTitle?.startAnimation(animationTitle)
+                txtTitlePlay?.startAnimation(animationTitle)
+            } else {
+                txtTitle?.clearAnimation()
+                txtTitlePlay?.clearAnimation()
+            }
+
         })
 
         musicService?.currentSongArtist?.observe(this, { artist ->
@@ -359,47 +398,43 @@ class MainActivity : AppCompatActivity() {
         startService(intent)
         bindService(intent, serviceConnection, 0)
     }
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_PLAY_SONG && resultCode == Activity.RESULT_OK) {
-            val title = data?.getStringExtra("TITLE1")
-            val author = data?.getStringExtra("AUTHOR1")
-            val image = data?.getParcelableExtra<Uri>("IMAGE1")
+    fun restoreOriginalList() {
+        adapter.listSong = musicService?.listSong?.value ?: emptyList()
+        adapter.notifyDataSetChanged()
+    }
 
-            // Cập nhật giao diện tại đây
-            txtTitle?.text = title
-            txtAuthor?.text = author
-            imgSong?.setImageURI(image)
+    fun filterSongs(query: String) {
+        val filteredSongs = mutableListOf<Song>()
+
+        val pattern = Pattern.compile(query.toString(), Pattern.CASE_INSENSITIVE) // Tạo biểu thức chính quy không phân biệt chữ hoa chữ thường
+        musicService?.listSong?.value?.forEach { song ->
+            val title = song.title
+            val author = song.author
+
+            if (title != null && pattern.matcher(title).find() || author != null && pattern.matcher(author).find()) {
+                filteredSongs.add(song)
+            }
         }
-    }
-    fun optionMenu(menu: Menu) : Boolean {
-        menuInflater.inflate(R.menu.search_btn, menu)
-        val menuItem: MenuItem = menu.findItem(R.id.search)
-        val searchView: SearchView =  menuItem?.actionView as SearchView
-
-        searchSong(searchView)
-        return onCreateOptionsMenu(menu)
-    }
-
-    fun searchSong(searchView: SearchView) {
-
+        // Cập nhật danh sách bài hát trên RecyclerView với danh sách kết quả tìm kiếm
+        adapter.listSong = filteredSongs
+        adapter.notifyDataSetChanged()
+        isSearchEmpty = query.isEmpty()
     }
 
     fun playerControls() {
         playerView = findViewById(R.id.play_view)
         playControl = findViewById(R.id.controller)
         val btnDown = findViewById<ImageView>(R.id.btn_down)
-        val appbar = findViewById<AppBarLayout>(R.id.appbar)
 //        playerView?.setOnClickListener {playControl?.visibility = View.GONE }
         playControl?.setOnClickListener {
             playerView?.visibility = View.VISIBLE
-            appbar.visibility = View.GONE
+            appbar?.visibility = View.GONE
         }
         btnDown.setOnClickListener{
             playerView?.visibility = View.GONE
-            appbar.visibility = View.VISIBLE
+            appbar?.visibility = View.VISIBLE
+            playControl?.visibility = View.VISIBLE
         }
-
     }
 
     fun updateSeekBar() {
@@ -409,7 +444,6 @@ class MainActivity : AppCompatActivity() {
             val progress = utilities.getProgressPercentage(currentPosition, totalDuration)
             seekBar?.progress = progress
             val currentDuration = utilities.milliSecondsToTimer(currentPosition)
-
             // Hiển thị thời gian chạy trên TextView
             txtCurrentTime?.text = currentDuration
         }
