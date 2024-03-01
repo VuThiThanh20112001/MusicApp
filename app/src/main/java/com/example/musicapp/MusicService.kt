@@ -26,9 +26,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Collections.shuffle
 import java.util.Random
-
-
 
 class MusicService : Service() {
     val MUSIC_CHANNEL_ID = "music_channel_id"
@@ -99,14 +98,6 @@ class MusicService : Service() {
 
     private fun offSuffer() {
         isSuffer = false
-    }
-
-    fun registerOnSeekChanged(onSeekChangedListener: OnSeekChangedListener) {
-        onSeekChangeListeners.add(onSeekChangedListener)
-    }
-
-    fun unregisterOnSeekChanged(onSeekChangedListener: OnSeekChangedListener) {
-        onSeekChangeListeners.remove(onSeekChangedListener)
     }
 
     private fun continueSong() {
@@ -207,13 +198,7 @@ class MusicService : Service() {
             }
             mediaPlayer.prepareAsync()
             mediaPlayer.setOnCompletionListener {
-                if(repeatMode == RepeatMode.OFF) {
-                    currentSongIndex = -1
-                } else if(repeatMode == RepeatMode.ONE) {
-                    playSongAtCurrentIndex()
-                } else if(repeatMode == RepeatMode.ALL) {
                     nextSong()
-                }
             }
         }
     }
@@ -342,9 +327,16 @@ class MusicService : Service() {
                     val albumId = c.getLong(albumIndex)
                     val duration = c.getLong(durationIndex)
 
-                    val image: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"),
+                    var image: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"),
                         albumId
                     )
+
+                    // Kiểm tra xem album có ảnh hay không
+
+                    // Sử dụng ảnh mặc định nếu không có ảnh
+                    if (image == null) {
+                        image = Uri.parse("android.resource://your.package.name/drawable/default_image")
+                    }
 
                     val song = Song(id, title, author, album, duration, image)
                     result.add(song)

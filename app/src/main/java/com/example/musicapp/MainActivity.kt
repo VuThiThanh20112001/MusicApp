@@ -130,6 +130,7 @@ class MainActivity : AppCompatActivity() {
         })
         recyclerView.adapter = adapter
 
+
         btnSearchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrEmpty()) {
@@ -154,12 +155,16 @@ class MainActivity : AppCompatActivity() {
         btnNext.setOnClickListener {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.action = "ACTION_NEXT"
+            btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
+            btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
             startService(intent)
         }
         val btnNextPlayer = findViewById<TextView>(R.id.skipNext)
         btnNextPlayer.setOnClickListener {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.action = "ACTION_NEXT"
+            btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
+            btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
             startService(intent)
         }
 
@@ -167,12 +172,16 @@ class MainActivity : AppCompatActivity() {
         btnPrev.setOnClickListener {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.action = "ACTION_PREV"
+            btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
+            btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
             startService(intent)
         }
         val btnPrevPlayer = findViewById<TextView>(R.id.skipPrevious)
         btnPrevPlayer.setOnClickListener {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.action = "ACTION_PREV"
+            btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
+            btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
             startService(intent)
         }
 
@@ -247,13 +256,13 @@ class MainActivity : AppCompatActivity() {
             val clickedColor = ContextCompat.getColor(this@MainActivity, R.color.color_click)
             if (!isSuffer) { // Nếu nút chưa được nhấn trước đó
                 if (musicService != null && musicService!!.mediaPlayer.isPlaying) {
-                    intent.action = "ACTION_REPEAT_ALL"
+                    intent.action = "ACTION_SUFFER"
                     startService(intent)
                     btnMix.setTextColor(clickedColor)
                     isSuffer = true
                 }
             } else { // Nếu nút đã được nhấn trước đó
-                intent.action = "ACTION_OFF_ALL_REPEAT_MODE"
+                intent.action = "ACTION_OFF_SUFFER"
                 startService(intent)
                 btnMix.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
                 isSuffer = false
@@ -319,10 +328,8 @@ class MainActivity : AppCompatActivity() {
             txtTitlePlay?.text = title
             if (title.length > 20) {
                 txtTitle?.startAnimation(animationTitle)
-                txtTitlePlay?.startAnimation(animationTitle)
             } else {
                 txtTitle?.clearAnimation()
-                txtTitlePlay?.clearAnimation()
             }
 
         })
