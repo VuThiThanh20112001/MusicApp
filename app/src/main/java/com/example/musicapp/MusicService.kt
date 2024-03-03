@@ -102,6 +102,7 @@ class MusicService : Service() {
 
     private fun continueSong() {
         mediaPlayer.start()
+
     }
 
     private fun offAllRepeatMode() {
@@ -176,6 +177,7 @@ class MusicService : Service() {
 
     private fun pauseSong() {
         mediaPlayer.pause()
+
     }
 
     fun playSongAtCurrentIndex() {
@@ -198,7 +200,12 @@ class MusicService : Service() {
             }
             mediaPlayer.prepareAsync()
             mediaPlayer.setOnCompletionListener {
+                if (repeatMode == RepeatMode.ONE) {
+                    playSongAtCurrentIndex()
+                } else {
                     nextSong()
+                }
+
             }
         }
     }
@@ -248,31 +255,43 @@ class MusicService : Service() {
             .getService(this, 103, nextIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val playIntent = Intent(this, MusicService::class.java)
-        val playAction = if (mediaPlayer.isPlaying) {
-            "ACTION_PAUSE"
-
-        } else {
-            "ACTION_CONTINUE"
-        }
-        playIntent.action = playAction
+//        val playAction = if (mediaPlayer.isPlaying) {
+//            "ACTION_PAUSE"
+//
+//        } else {
+//            "ACTION_CONTINUE"
+//        }
+        playIntent.action = "ACTION_PAUSE"
         val playPendingIntent = PendingIntent
             .getService(this, 104, playIntent, PendingIntent.FLAG_IMMUTABLE)
-        val playIcon = if (playAction != "ACTION_PAUSE") {
-            R.drawable.baseline_play_arrow_24
+        val pauseIntent = Intent(this, MusicService::class.java)
 
-        } else {
-            R.drawable.baseline_pause_24
-
-        }
+        playIntent.action = "ACTION_CONTINUE"
+        val pausePendingIntent = PendingIntent
+            .getService(this, 104, pauseIntent, PendingIntent.FLAG_IMMUTABLE)
+//        val playIcon = if (playAction != "ACTION_PAUSE") {
+//            R.drawable.baseline_play_arrow_24
+//
+//        } else {
+//            R.drawable.baseline_pause_24
+//
+//        }
 //        val bitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.baseline_music_note_24)
 
         val controller = RemoteViews(packageName, R.layout.controller_notification)
         controller.setOnClickPendingIntent(R.id.btn_prev, prevPendingIntent)
         controller.setOnClickPendingIntent(R.id.btn_next, nextPendingIntent)
-        controller.setOnClickPendingIntent(R.id.btn_play_pause, playPendingIntent)
-        controller.setImageViewResource(R.id.btn_play_pause, playIcon)
+//        controller.setOnClickPendingIntent(R.id.btn_play_pause, playPendingIntent)
+        controller.setImageViewResource(R.id.btn_play_pause, R.drawable.baseline_pause_24)
         controller.setTextViewText(R.id.txt_title, listSong.value!![currentSongIndex].title)
         controller.setTextViewText(R.id.txt_author, listSong.value!![currentSongIndex].author)
+        if (mediaPlayer.isPlaying) {
+            controller.setOnClickPendingIntent(R.id.btn_play_pause, playPendingIntent)
+            controller.setImageViewResource(R.id.btn_play_pause, R.drawable.baseline_pause_24)
+        } else {
+            controller.setOnClickPendingIntent(R.id.btn_play_pause, pausePendingIntent)
+            controller.setImageViewResource(R.id.btn_play_pause, R.drawable.baseline_play_arrow_24)
+        }
 
         val notification = NotificationCompat.Builder(this, MUSIC_CHANNEL_ID)
             .setSmallIcon(R.drawable.baseline_music_note_24)

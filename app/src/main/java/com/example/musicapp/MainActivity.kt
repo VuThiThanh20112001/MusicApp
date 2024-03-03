@@ -28,27 +28,23 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.musicapp.databinding.ActivityMainBinding
 import com.google.android.material.appbar.AppBarLayout
 import java.util.regex.Pattern
 
 val ATLEAST_TIRAMISU = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMainBinding
 
-    lateinit var recyclerView: RecyclerView
     lateinit var adapter: SongListAdapter
     var musicService: MusicService? = null
-    var txtTitle : TextView? = null
-    var txtAuthor : TextView? = null
-    var imgSong : ImageView? = null
     var txtTitlePlay : TextView? = null
     var txtAuthorPlay : TextView? = null
     var imgSongPlay : ImageView? = null
     var playerView : LinearLayout? = null
-    var playControl : ConstraintLayout? = null
     var txtCurrentTime : TextView? = null
     var skipEnd : TextView? = null
-    var btnPlayPause: ImageView? = null
     var btnPlaySong: ImageView? = null
     var isSuffer = false
     var animation: Animation? = null
@@ -57,8 +53,6 @@ class MainActivity : AppCompatActivity() {
     var isRepeatOneEnabled = false
     val handler = Handler(Looper.getMainLooper())
     val utilities = Utilities()
-    var appbar : AppBarLayout? = null
-    var btnSearchView : SearchView? = null
     var isSearchEmpty = true
 
 
@@ -83,19 +77,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+//        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         val intent = Intent(this, MusicService::class.java)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
 
-        recyclerView = findViewById(R.id.rcv_song)
-        txtTitle = findViewById(R.id.txt_play_name)
-        txtAuthor = findViewById(R.id.txt_play_author)
-        imgSong = findViewById(R.id.imv_play_song)
-        btnPlayPause = findViewById(R.id.btn_play_pause)
-        appbar = findViewById(R.id.appbar)
-        btnSearchView = findViewById(R.id.btn_Search)
-        btnSearchView?.clearFocus()
-
+        binding.btnSearch.clearFocus()
         txtTitlePlay = findViewById(R.id.txt_songname)
         txtAuthorPlay = findViewById(R.id.txt_author)
         btnPlaySong = findViewById(R.id.play)
@@ -106,8 +94,6 @@ class MainActivity : AppCompatActivity() {
         seekBar?.max = 100
         animation = AnimationUtils.loadAnimation(this@MainActivity, R.anim.rotate)
         animationTitle = AnimationUtils.loadAnimation(this@MainActivity, R.anim.translate)
-
-
 
         val updateSeekBarRunnable = object : Runnable {
             override fun run() {
@@ -125,20 +111,19 @@ class MainActivity : AppCompatActivity() {
             startService(intent)
             imgSongPlay?.startAnimation(animation)
             playerView?.visibility = View.VISIBLE
-            appbar?.visibility = View.GONE
+            binding.appbar.visibility = View.GONE
 
         })
-        recyclerView.adapter = adapter
+        binding.rcvSong.adapter = adapter
 
-
-        btnSearchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
+        binding.btnSearch.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrEmpty()) {
                     filterSongs(query)
                 } else {
                     restoreOriginalList()
                 }
-                return false
+                return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
@@ -156,7 +141,7 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.action = "ACTION_NEXT"
             btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
-            btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
+            binding.btnPlayPause.setImageResource(R.drawable.baseline_pause_24)
             startService(intent)
         }
         val btnNextPlayer = findViewById<TextView>(R.id.skipNext)
@@ -164,7 +149,7 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.action = "ACTION_NEXT"
             btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
-            btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
+            binding.btnPlayPause.setImageResource(R.drawable.baseline_pause_24)
             startService(intent)
         }
 
@@ -173,7 +158,7 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.action = "ACTION_PREV"
             btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
-            btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
+            binding.btnPlayPause.setImageResource(R.drawable.baseline_pause_24)
             startService(intent)
         }
         val btnPrevPlayer = findViewById<TextView>(R.id.skipPrevious)
@@ -181,21 +166,21 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             intent.action = "ACTION_PREV"
             btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
-            btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
+            binding.btnPlayPause.setImageResource(R.drawable.baseline_pause_24)
             startService(intent)
         }
 
-        btnPlayPause?.setOnClickListener {
+        binding.btnPlayPause.setOnClickListener {
             val intent = Intent(this@MainActivity, MusicService::class.java)
             if(musicService != null && musicService!!.mediaPlayer.isPlaying) {
                 intent.action = "ACTION_PAUSE"
-                btnPlayPause?.setImageResource(R.drawable.baseline_play_arrow_24)
+                binding.btnPlayPause.setImageResource(R.drawable.baseline_play_arrow_24)
                 btnPlaySong?.setImageResource(R.drawable.baseline_play_circle_24)
                 animation?.cancel()
                 imgSongPlay?.clearAnimation()
             } else {
                 intent.action = "ACTION_CONTINUE"
-                btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
+                binding.btnPlayPause.setImageResource(R.drawable.baseline_pause_24)
                 btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
                 imgSongPlay?.startAnimation(animation)
                 updateSeekBar()
@@ -208,14 +193,14 @@ class MainActivity : AppCompatActivity() {
             if(musicService != null && musicService!!.mediaPlayer.isPlaying) {
                 intent.action = "ACTION_PAUSE"
                 btnPlaySong?.setImageResource(R.drawable.baseline_play_circle_24)
-                btnPlayPause?.setImageResource(R.drawable.baseline_play_arrow_24)
+                binding.btnPlayPause.setImageResource(R.drawable.baseline_play_arrow_24)
                 animation?.cancel()
                 imgSongPlay?.clearAnimation()
 
             } else {
                 intent.action = "ACTION_CONTINUE"
                 btnPlaySong?.setImageResource(R.drawable.baseline_pause_circle_outline_24)
-                btnPlayPause?.setImageResource(R.drawable.baseline_pause_24)
+                binding.btnPlayPause.setImageResource(R.drawable.baseline_pause_24)
                 imgSongPlay?.startAnimation(animation)
                 updateSeekBar()
             }
@@ -324,19 +309,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun observeCurrentSongTitle() {
         musicService?.currentSongTitle?.observe(this, { title ->
-            txtTitle?.text = title
+            binding.txtPlayName.text = title
             txtTitlePlay?.text = title
             if (title.length > 20) {
-                txtTitle?.startAnimation(animationTitle)
+                binding.txtPlayName.startAnimation(animationTitle)
             } else {
-                txtTitle?.clearAnimation()
+                binding.txtPlayName.clearAnimation()
             }
 
         })
 
         musicService?.currentSongArtist?.observe(this, { artist ->
             // Cập nhật tác giả của bài hát trên giao diện người dùng
-            txtAuthor?.text = artist
+            binding.txtPlayAuthor.text = artist
             txtAuthorPlay?.text = artist
         })
 
@@ -346,7 +331,7 @@ class MainActivity : AppCompatActivity() {
             Glide.with(this)
                 .load(url)
                 .circleCrop()
-                .into(imgSong!!)
+                .into(binding.imvPlaySong)
             Glide.with(this)
                 .load(url)
                 .circleCrop()
@@ -430,17 +415,15 @@ class MainActivity : AppCompatActivity() {
 
     fun playerControls() {
         playerView = findViewById(R.id.play_view)
-        playControl = findViewById(R.id.controller)
         val btnDown = findViewById<ImageView>(R.id.btn_down)
-//        playerView?.setOnClickListener {playControl?.visibility = View.GONE }
-        playControl?.setOnClickListener {
+        binding.controller.setOnClickListener {
             playerView?.visibility = View.VISIBLE
-            appbar?.visibility = View.GONE
+            binding.appbar.visibility = View.GONE
         }
         btnDown.setOnClickListener{
             playerView?.visibility = View.GONE
-            appbar?.visibility = View.VISIBLE
-            playControl?.visibility = View.VISIBLE
+            binding.appbar.visibility = View.VISIBLE
+            binding.controller.visibility = View.VISIBLE
         }
     }
 
